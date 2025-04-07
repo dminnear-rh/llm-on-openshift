@@ -3,12 +3,14 @@ from vector_db.faiss_provider import FAISSProvider
 from vector_db.pgvector_provider import PGVectorProvider
 from vector_db.redis_provider import RedisProvider
 from vector_db.elastic_provider import ElasticProvider
+from vector_db.sqlserver_provider import SQLServerProvider
 from langchain_core.vectorstores import VectorStoreRetriever
 
 PGVECTOR = "PGVECTOR"
 REDIS = "REDIS"
 FAISS = "FAISS"
 ELASTIC = "ELASTIC"
+SQLSERVER = "SQLSERVER"
 
 class DBFactory:
     providers: dict[str, DBProvider] = {}
@@ -24,18 +26,20 @@ class DBFactory:
             return FAISSProvider()
         elif type == ELASTIC:
             return ElasticProvider()
+        elif type == SQLSERVER:
+            return SQLServerProvider()
         else:
             raise ValueError(type)
 
     def get_db_provider(self, type: str):
         if type not in self.providers:
             self.providers[type] = self.create_db_provider(type)
-        
+
         return self.providers[type]
-    
+
     def get_retriever(self, type: str) -> VectorStoreRetriever:
         return self.get_db_provider(type).get_retriever()
 
-    @classmethod 
+    @classmethod
     def get_providers(cls) -> list[str]:
         return [PGVECTOR, REDIS, FAISS, ELASTIC]
