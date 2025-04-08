@@ -4,6 +4,7 @@ channels:
   - defaults
 dependencies:
   - python=3.12
+  - accelerate
   - aiofiles
   - aiohttp
   - aiosignal
@@ -26,8 +27,6 @@ dependencies:
   - fonttools
   - frozenlist
   - fsspec
-  - gradio
-  - gradio-client
   - greenlet
   - h11
   - httpcore
@@ -77,6 +76,7 @@ dependencies:
   - safetensors
   - scikit-learn
   - scipy
+  - sentence-transformers
   - sentencepiece
   - six
   - sniffio
@@ -98,6 +98,8 @@ dependencies:
   - websockets
   - yarl
   - pip:
+    - gradio
+    - gradio-client
     - huggingface-hub
     - langchain
     - langchain-community
@@ -111,7 +113,6 @@ dependencies:
     - pdfkit
     - prometheus-client
     - semantic-version
-    - sentence-transformers
     - text_generation
     - torch
     - typing-inspect

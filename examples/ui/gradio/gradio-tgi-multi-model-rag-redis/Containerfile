@@ -53,6 +53,12 @@ COPY entrypoint.sh .
 # Set permissions and switch to non-root user
 RUN chmod -R 777 . && \
     chown 1001:0 ./*
+RUN mkdir -p /.config && \
+    chmod -R 777 /.config && \
+    chown 1001:0 /.config
+RUN mkdir -p /.cache && \
+    chmod -R 777 /.cache && \
+    chown 1001:0 /.cache
 
 USER 1001
 

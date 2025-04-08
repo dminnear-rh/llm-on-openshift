@@ -57,7 +57,4 @@ class SQLServerProvider(DBProvider):
         return self.db
 
     def get_retriever(self) -> VectorStoreRetriever:
-        return self.get_client().as_retriever(
-            search_type="similarity",
-            search_kwargs={"k": 5, "distance_threshold": 0.5}
-        )
+        return self.get_client().as_retriever()
