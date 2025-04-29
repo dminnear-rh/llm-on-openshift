@@ -1,4 +1,4 @@
-name: dev
+name: llm-on-openshift
 channels:
   - conda-forge
   - defaults

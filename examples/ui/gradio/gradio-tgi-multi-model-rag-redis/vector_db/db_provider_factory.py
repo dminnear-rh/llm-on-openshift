@@ -1,19 +1,21 @@
+from langchain_core.vectorstores import VectorStoreRetriever
 from vector_db.db_provider import DBProvider
+from vector_db.elastic_provider import ElasticProvider
 from vector_db.faiss_provider import FAISSProvider
+from vector_db.mssql_provider import MSSQLProvider
 from vector_db.pgvector_provider import PGVectorProvider
 from vector_db.redis_provider import RedisProvider
-from vector_db.elastic_provider import ElasticProvider
-from vector_db.sqlserver_provider import SQLServerProvider
-from langchain_core.vectorstores import VectorStoreRetriever
 
 PGVECTOR = "PGVECTOR"
 REDIS = "REDIS"
 FAISS = "FAISS"
 ELASTIC = "ELASTIC"
-SQLSERVER = "SQLSERVER"
+MSSQL = "MSSQL"
+
 
 class DBFactory:
     providers: dict[str, DBProvider] = {}
+
     def __init__(self):
         pass
 
@@ -26,8 +28,8 @@ class DBFactory:
             return FAISSProvider()
         elif type == ELASTIC:
             return ElasticProvider()
-        elif type == SQLSERVER:
-            return SQLServerProvider()
+        elif type == MSSQL:
+            return MSSQLProvider()
         else:
             raise ValueError(type)
 
