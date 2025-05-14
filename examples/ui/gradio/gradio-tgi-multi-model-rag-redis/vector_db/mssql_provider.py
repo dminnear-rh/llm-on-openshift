@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 
@@ -7,8 +6,6 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from langchain_sqlserver import SQLServer_VectorStore
 
 from vector_db.db_provider import DBProvider
-
-logger = logging.getLogger(__name__)
 
 
 class MSSQLProvider(DBProvider):
@@ -34,12 +31,7 @@ class MSSQLProvider(DBProvider):
         host = match.group(1) if match else "unknown"
         port = match.group(2) if match and match.group(2) else "default"
 
-        logger.info(
-            "Connected to MSSQL vector store at %s:%s (table: %s)",
-            host,
-            port,
-            table,
-        )
+        print(f"Connected to MSSQL vector store at {host}:{port} (table: {table})")
 
         # Optional: log the number of vector records
         try:
@@ -47,9 +39,9 @@ class MSSQLProvider(DBProvider):
                 cursor = conn.cursor()
                 cursor.execute(f"SELECT COUNT(*) FROM [{table}]")
                 row_count = cursor.fetchone()[0]
-                logger.info("Vector table '%s' contains %d records", table, row_count)
+                print(f"Vector table '{table}' contains {row_count} records")
         except Exception as e:
-            logger.warning("Could not count records in table '%s': %s", table, e)
+            print(f"Could not count records in table '{table}': {e.__repr__()}")
 
     @staticmethod
     def _get_required_env(key: str) -> str:

@@ -1,5 +1,6 @@
 from langchain.callbacks.base import BaseCallbackHandler
 
+
 class QueueCallback(BaseCallbackHandler):
     """Callback handler for streaming LLM responses to a queue."""
 

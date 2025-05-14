@@ -1,4 +1,5 @@
 from langchain_core.vectorstores import VectorStoreRetriever
+
 from vector_db.db_provider import DBProvider
 from vector_db.elastic_provider import ElasticProvider
 from vector_db.faiss_provider import FAISSProvider
