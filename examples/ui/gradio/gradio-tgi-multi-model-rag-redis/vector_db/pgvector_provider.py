@@ -1,8 +1,8 @@
 import os
 from typing import Optional
 
-from langchain_community.vectorstores import PGVector
 from langchain_core.vectorstores import VectorStoreRetriever
+from langchain_postgres import PGVector
 
 from vector_db.db_provider import DBProvider
 
@@ -33,9 +33,9 @@ class PGVectorProvider(DBProvider):
     def get_retriever(self) -> VectorStoreRetriever:
         if self.retriever is None:
             self.db = PGVector(
-                connection_string=self.url,
+                connection=self.url,
                 collection_name=self.collection_name,
-                embedding_function=self.get_embeddings(),
+                embeddings=self.get_embeddings(),
             )
 
             self.retriever = self.db.as_retriever(

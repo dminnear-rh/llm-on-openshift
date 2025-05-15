@@ -1,3 +1,4 @@
+import os
 import uuid
 from queue import Queue
 
@@ -24,17 +25,18 @@ class ProposalGenerationTab:
         proposal_generator = ProposalGenerator(session_id)
         llm = get_llm(provider_model, True, que)
 
-        download_link_html = f' <input type="hidden" id="pdf_file" name="pdf_file" value="/file={proposal_generator.get_pdf_file()}" />'
-        for next_token, content in proposal_generator.generate_proposal(
+        for _, partial_content in proposal_generator.generate_proposal(
             llm, model_id, que, product, company
         ):
-            yield content, download_link_html
+            content = partial_content
+            yield content, None
+
+        pdf_path = proposal_generator.get_pdf_file()
+        yield content, pdf_path
 
     def update_proposal(
         self,
         provider_model: str,
-        company: str,
-        product: str,
         old_proposal: str,
         user_query: str,
     ):
@@ -45,11 +47,13 @@ class ProposalGenerationTab:
         proposal_generator = ProposalGenerator(session_id)
         llm = get_llm(provider_model, True, que)
 
-        download_link_html = f' <input type="hidden" id="pdf_file" name="pdf_file" value="/file={proposal_generator.get_pdf_file()}" />'
-        for next_token, content in proposal_generator.update_proposal(
+        for _, content in proposal_generator.update_proposal(
             llm, model_id, que, old_proposal, user_query
         ):
-            yield content, download_link_html
+            yield content, None
+
+        pdf_path = proposal_generator.get_pdf_file()
+        yield content, pdf_path
 
     def generate(self, gr, provider_model_var):
         provider_model_list = config_loader.get_provider_model_list()
@@ -69,10 +73,10 @@ class ProposalGenerationTab:
                 with gr.Row():
                     submit_button = gr.Button("Generate")
                     clear_button = gr.ClearButton(value="Clear", icon=None)
-                model_text = gr.HTML(visible=~provider_visible)
+                model_text = gr.HTML(visible=not provider_visible)
 
                 def update_models(selected_provider, provider_model):
-                    provider_id, model_id = get_provider_model(selected_provider)
+                    _, model_id = get_provider_model(selected_provider)
                     m = f"<div><span id='model_id'>Model: {model_id}</span></div>"
                     return {provider_model_var: selected_provider, model_text: m}
 
@@ -92,7 +96,7 @@ class ProposalGenerationTab:
                         if provider_model_tuple is not None:
                             provider_model = provider_model_tuple[0]
 
-                    provider_id, model_id = get_provider_model(provider_model)
+                    _, model_id = get_provider_model(provider_model)
                     provider_visible = is_provider_visible()
                     provider_model_list = config_loader.get_provider_model_list()
                     p_dropdown = gr.Dropdown(
@@ -130,40 +134,38 @@ class ProposalGenerationTab:
                     visible=False,
                 )
                 update_proposal_button = gr.Button("Update proposal", visible=False)
-                download_button = gr.Button("Download as PDF", visible=False)
-                download_link_html = gr.HTML(visible=False)
-
-        download_button.click(
-            None,
-            [],
-            [],
-            js="() => window.open(document.getElementById('pdf_file').value, '_blank')",
-        )
+                download_file = gr.File(label="Download as PDF", visible=False)
 
         def validate_update_proposal_input(text):
             if not text:
                 raise gr.Error("Update proposal cannot be blank")
 
-        update_proposal_button.click(
-            validate_update_proposal_input, inputs=[input_update_proposal]
-        ).success(
-            self.update_proposal,
-            inputs=[
-                providers_dropdown,
-                customer_box,
-                product_text_box,
-                output_answer,
-                input_update_proposal,
-            ],
-            outputs=[output_answer, download_link_html],
-        )
-
-        def make_visable_chat_with_pdf():
+        def make_visible_chat_with_pdf():
             return (
                 gr.update(visible=True),
                 gr.update(visible=True),
                 gr.update(visible=True),
             )
+
+        update_proposal_button.click(
+            validate_update_proposal_input, inputs=[input_update_proposal]
+        ).success(
+            lambda: (None, gr.update(visible=False)),
+            inputs=None,
+            outputs=[output_answer, download_file],
+        ).success(
+            self.update_proposal,
+            inputs=[
+                providers_dropdown,
+                output_answer,
+                input_update_proposal,
+            ],
+            outputs=[output_answer, download_file],
+        ).success(
+            make_visible_chat_with_pdf,
+            inputs=None,
+            outputs=[input_update_proposal, download_file, update_proposal_button],
+        )
 
         def validate_generate_input(provider, customer, product):
 
@@ -182,16 +184,29 @@ class ProposalGenerationTab:
             validate_generate_input,
             inputs=[providers_dropdown, customer_box, product_text_box],
         ).success(
+            lambda: (None, gr.update(visible=False)),
+            inputs=None,
+            outputs=[output_answer, download_file],
+        ).success(
             self.generate_proposal,
             inputs=[providers_dropdown, customer_box, product_text_box],
-            outputs=[output_answer, download_link_html],
+            outputs=[output_answer, download_file],
         ).success(
-            make_visable_chat_with_pdf,
+            make_visible_chat_with_pdf,
             inputs=None,
-            outputs=[input_update_proposal, download_button, update_proposal_button],
+            outputs=[input_update_proposal, download_file, update_proposal_button],
         )
         clear_button.click(
-            lambda: [None, None, None, None, None],
+            lambda: [
+                None,
+                None,
+                None,
+                None,
+                None,
+                gr.update(visible=False),
+                gr.update(visible=False),
+                gr.update(visible=False),
+            ],
             inputs=[],
             outputs=[
                 customer_box,
@@ -199,12 +214,15 @@ class ProposalGenerationTab:
                 output_answer,
                 radio,
                 output_rating,
+                input_update_proposal,
+                update_proposal_button,
+                download_file,
             ],
         )
 
         @radio.input(inputs=[radio, provider_model_var], outputs=output_rating)
         def get_feedback(star, provider_model):
-            provider_id, model_id = get_provider_model(provider_model)
+            _, model_id = get_provider_model(provider_model)
             print(f"Model: {provider_model}, Rating: {star}")
             # Increment the counter based on the star rating received
             FEEDBACK_COUNTER.labels(stars=str(star), model_id=model_id).inc()

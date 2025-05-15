@@ -52,7 +52,7 @@ css = """
 
 """
 
-with gr.Blocks(title="HatBot", css=css) as demo:
+with gr.Blocks(title=APP_TITLE, css=css) as demo:
     provider_model_var = gr.State()
     with gr.Tab("Proposal Generator Chatbot", id=1) as proposal_tab:
         proposal_generator_tab = ProposalGenerationTab(proposal_tab, demo)
